@@ -1,5 +1,7 @@
 # Loja Virtual
 
+(22 de outubro de 2024)
+
 Loja virtual desenvolvida durante a disciplina de Desenvolvimento Web Avançado no Ifes Cachoeiro.
 
 ## Como Usar Este Projeto
@@ -94,6 +96,19 @@ Para configurar o MailerSender, siga as instruções no arquivo [mailersend.md](
 ## Configuração do Mercado Pago
 
 Para configurar o Mercado Pago, siga as instruções no arquivo [mercadopago.md](mercadopago.md).
+
+# Extensões Úteis para VSCode
+
+ - Bootstrap 5 Quick Snippets
+ - GitLens
+ - HTML CSS Support
+ - IntelliCode
+ - IntelliSense for CSS class names in HTML
+ - Jinha
+ - Python
+ - Reload
+ - SQLite Viewer
+ - vscode-icons
 
 ## Referências
 
