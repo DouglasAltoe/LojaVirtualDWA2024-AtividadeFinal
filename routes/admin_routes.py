@@ -1,14 +1,18 @@
 import asyncio
 from io import BytesIO
 from typing import List, Optional
-from fastapi import APIRouter, File, Form, Path, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Path, Request, UploadFile
 from fastapi.responses import JSONResponse
 from PIL import Image
 
 from dtos.alterar_pedido_dto import AlterarPedidoDto
 from dtos.alterar_produto_dto import AlterarProdutoDto
+from dtos.inserir_categoria_dto import InserirCategoriaDto
 from dtos.inserir_produto_dto import InserirProdutoDto
 from dtos.problem_details_dto import ProblemDetailsDto
+from dtos.problem_details_dto import ProblemDetailsDto
+from models.categoria_model import Categoria
+from repositories.categoria_repo import CategoriaRepo
 from models.pedido_model import EstadoPedido
 from models.produto_model import Produto
 from models.usuario_model import Usuario
@@ -16,6 +20,7 @@ from repositories.item_pedido_repo import ItemPedidoRepo
 from repositories.pedido_repo import PedidoRepo
 from repositories.produto_repo import ProdutoRepo
 from repositories.usuario_repo import UsuarioRepo
+from util import templates
 from util.images import transformar_em_quadrada
 
 SLEEP_TIME = 0.2
@@ -35,13 +40,15 @@ async def inserir_produto(
     preco: float = Form(...),
     descricao: str = Form(...),
     estoque: int = Form(...),
+    categoria: int = Form(...),
     imagem: Optional[UploadFile] = File(None)
 ):    
     produto_dto = InserirProdutoDto(
         nome=nome,
         preco=preco,
         descricao=descricao,
-        estoque=estoque
+        estoque=estoque,
+        categoria=categoria
     )
     conteudo_arquivo = await imagem.read()
     imagem = Image.open(BytesIO(conteudo_arquivo))
@@ -55,7 +62,7 @@ async def inserir_produto(
         return JSONResponse(pd.to_dict(), status_code=422)
     await asyncio.sleep(SLEEP_TIME)
     novo_produto = Produto(
-        None, produto_dto.nome, produto_dto.preco, produto_dto.descricao, produto_dto.estoque
+        None, produto_dto.nome, produto_dto.preco, produto_dto.descricao, produto_dto.estoque, categoria
     )
     novo_produto = ProdutoRepo.inserir(novo_produto)
     if novo_produto:
@@ -213,5 +220,76 @@ async def excluir_usuario(id_usuario: int = Form(...)):
         f"O usuario com id <b>{id_usuario}</b> não foi encontrado.",
         "value_not_found",
         ["body", "id_produto"],
+    )
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+
+@router.get("/obter_categorias")
+async def obter_categorias():
+    await asyncio.sleep(SLEEP_TIME)
+    categorias = CategoriaRepo.obter_todos()
+    return categorias
+
+
+@router.get("/categoria/{id_categoria:int}")
+async def obter_categoria(request: Request, id_categoria: int):
+    categoria = CategoriaRepo.obter_um(id_categoria)
+    if not categoria:
+        raise HTTPException(status_code=404, detail="Categoria não encontrada.")
+    return categoria
+
+
+@router.post("/inserir_categoria", status_code=201)
+async def inserir_categoria(
+    descricao: str = Form(...),
+):
+    categoria_dto = InserirCategoriaDto(
+        descricao=descricao
+    )
+    nova_categoria = Categoria(
+        None, categoria_dto.descricao
+    )
+    nova_categoria = CategoriaRepo.inserir(nova_categoria)
+    
+    if nova_categoria:
+        return nova_categoria
+    else:
+        pd = ProblemDetailsDto(
+            "categoria",
+            "Erro ao inserir a categoria.",
+            "insertion_failed",
+            ["body", "descricao"],
+        )
+        return JSONResponse(pd.to_dict(), status_code=422)
+    
+
+@router.post("/alterar_categoria", status_code=204)
+async def alterar_categoria(
+    id_categoria: int = Form(..., title="Id da Categoria", ge=1),
+    nome: str = Form(...),
+    descricao: str = Form(...),
+):
+    categoria = Categoria(id=id_categoria, descricao=descricao)
+    if CategoriaRepo.alterar(categoria):
+        return None
+    pd = ProblemDetailsDto(
+        "int",
+        f"A categoria com id <b>{id_categoria}</b> não foi encontrada.",
+        "value_not_found",
+        ["body", "id"],
+    )
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+
+@router.post("/excluir_categoria", status_code=204)
+async def excluir_categoria(id_categoria: int = Form(..., title="Id da Categoria", ge=1)):
+    await asyncio.sleep(SLEEP_TIME)
+    if CategoriaRepo.excluir(id_categoria):
+        return None
+    pd = ProblemDetailsDto(
+        "int",
+        f"A categoria com id <b>{id_categoria}</b> não foi encontrada.",
+        "value_not_found",
+        ["body", "id"],
     )
     return JSONResponse(pd.to_dict(), status_code=404)

@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "descricao": "Acessório"
+    },
+    {
+        "id": 2,
+        "descricao": "Hardware Principal"
+    },
+    {
+        "id": 3,
+        "descricao": "Hardware Extra"
+    }
+]

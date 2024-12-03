@@ -22,23 +22,17 @@ class ProdutoRepo:
                 cursor = conexao.cursor()
                 cursor.execute(
                     SQL_INSERIR,
-                    (produto.nome, produto.preco, produto.descricao, produto.estoque),
+                    (
+                        produto.nome,
+                        produto.preco,
+                        produto.descricao,
+                        produto.estoque,
+                        produto.categoria
+                    ),
                 )
                 if cursor.rowcount > 0:
                     produto.id = cursor.lastrowid
                     return produto
-        except sqlite3.Error as ex:
-            print(ex)
-            return None
-
-    @classmethod
-    def obter_todos(cls) -> List[Produto]:
-        try:
-            with obter_conexao() as conexao:
-                cursor = conexao.cursor()
-                tuplas = cursor.execute(SQL_OBTER_TODOS).fetchall()
-                produtos = [Produto(*t) for t in tuplas]
-                return produtos
         except sqlite3.Error as ex:
             print(ex)
             return None
@@ -55,6 +49,7 @@ class ProdutoRepo:
                         produto.preco,
                         produto.descricao,
                         produto.estoque,
+                        produto.categoria,
                         produto.id,
                     ),
                 )
@@ -137,7 +132,19 @@ class ProdutoRepo:
                 return int(tupla[0])
         except sqlite3.Error as ex:
             print(ex)
-            return None
+            return None 
+        
+    @classmethod
+    def obter_todos(cls) -> List[Produto]:
+        try:
+            with obter_conexao() as conexao:
+                cursor = conexao.cursor()
+                tuplas = cursor.execute("SELECT * FROM produto").fetchall()
+                produtos = [Produto(*t) for t in tuplas]
+                return produtos
+        except sqlite3.Error as ex:
+            print(ex)
+            return []
 
     @classmethod
     def inserir_produtos_json(cls, arquivo_json: str):
